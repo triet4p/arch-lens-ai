@@ -1,0 +1,25 @@
+[project]
+name = "python-sidecar"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.134.0",
+    "httpx>=0.28.1",
+    "markitdown>=0.1.5",
+    "pydantic-ai>=1.63.0",
+    "pydantic-settings>=2.13.1",
+    "pymupdf>=1.27.1",
+    "pymupdf-layout>=1.27.1",
+    "pymupdf4llm>=0.3.4",
+    "sqlmodel>=0.0.37",
+    "uvicorn>=0.41.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.19.0",
+    "pytest>=9.0.2",
+    "ruff>=0.15.4",
+]

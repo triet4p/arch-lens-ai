@@ -1,0 +1,43 @@
+# Legacy Project
+.legacy/
+
+# Generated LLM context file (do not commit)
+artifacts/llms.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.uv/
+*.egg-info/
+dist/
+build/
+*.spec
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Environment
+.env
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Rust / Tauri
+target/
+src-tauri/target/
+src-tauri/binaries/
+src-tauri/icons/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/

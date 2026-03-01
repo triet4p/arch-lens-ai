@@ -1,79 +1,71 @@
 import os
 import sys
 import inspect
+import multiprocessing
 
 if sys.stdout: sys.stdout.reconfigure(encoding='utf-8', line_buffering=True)
 if sys.stderr: sys.stderr.reconfigure(encoding='utf-8', line_buffering=True)
 
-
-# 1. Vô hiệu hóa Pydantic Plugin ngay lập tức
 os.environ['PYDANTIC_SKIP_VALIDATOR_PLUGIN'] = '1'
 
-# 2. Monkey patch module 'inspect' để tránh lỗi OSError: could not get source code
-# Khi chạy trong file .exe, hàm này sẽ trả về chuỗi rỗng thay vì raise lỗi.
 if getattr(sys, 'frozen', False):
-    def patched_getsource(obj):
-        return ""
-    
-    def patched_getsourcelines(obj):
-        return ([], 0)
-
+    def patched_getsource(obj): return ""
+    def patched_getsourcelines(obj): return ([], 0)
     inspect.getsource = patched_getsource
     inspect.getsourcelines = patched_getsourcelines
-    # Patch thêm findsource nếu cần thiết cho một số bản logfire cũ
-    inspect.findsource = patched_getsourcelines 
-    
-    
-import sys
+    inspect.findsource = patched_getsourcelines
+
+# --- IMPORTS ---
 import uvicorn
 from fastapi import FastAPI
-from pydantic_ai import Agent
-from pydantic_settings import BaseSettings
-import pymupdf  # PyMuPDF
-import pymupdf4llm
-import pymupdf.layout
-from markitdown import MarkItDown
-from sqlmodel import SQLModel, create_engine
-import httpx
+from fastapi.middleware.cors import CORSMiddleware
 
-# 1. Kiểm tra Version & Imports (In ra để Tauri Log bắt được)
-print(f"--- Arch Lens Sidecar Initializing ---")
-print(f"Python Version: {sys.version}")
-print(f"PyMuPDF Version: {pymupdf.__version__}")
-print(f"FastAPI Version: {FastAPI.__module__}")
+from src.app.core.config import settings
+import src.app.core.constants as constants
+from src.app.core.lifecycle import app_lifespan
+from src.app.core.logger import get_logger
+from src.app.core.middleware import setup_interaction_tracking_middleware
+from src.app.core.state import ArxivAPIState, SystemState
+from src.app.core.watchdog import SidecarWatchdog
 
-# 2. Cấu hình Settings đơn giản
-class Settings(BaseSettings):
-    API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "Arch Lens AI Backend"
+# IMPORT MASTER ROUTER VỪA TẠO
+from src.app.api.v1.api import api_router
 
-settings = Settings()
+_logger = get_logger('[PythonSidecar - Main]')
+multiprocessing.freeze_support()
 
-# 3. Khởi tạo FastAPI
-app = FastAPI(title=settings.PROJECT_NAME)
+# --- APP SETUP ---
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    lifespan=app_lifespan
+)
 
-@app.get("/")
-async def root():
-    return {"message": "Arch Lens Sidecar is running"}
+app.state.system_state = SystemState()
+app.state.arxiv_api_state = ArxivAPIState(
+    user_agents=constants.ARXIV_USER_AGENTS,
+    max_wait_time_seconds=settings.ARXIV_MAX_WAIT_TIME_SECONDS,
+    http_timeout_seconds=settings.ARXIV_HTTP_TIMEOUT_SECONDS,
+    http_max_connections=settings.ARXIV_HTTP_MAX_CONNECTIONS,
+    http_max_keepalive_connections=settings.ARXIV_HTTP_MAX_KEEPALIVE_CONNECTIONS
+)
+app.state.watchdog = SidecarWatchdog(
+    timeout_seconds=settings.WATCHDOG_TIMEOUT_SECONDS,
+    check_interval_seconds=settings.WATCHDOG_CHECK_INTERVAL_SECONDS
+)
 
-@app.get("/health")
-async def health_check():
-    # Test thử một instance PydanticAI Agent (chưa cần gọi LLM)
-    test_agent = Agent('openai:gpt-4o', system_prompt="Health check")
-    
-    # Test thử MarkItDown
-    md = MarkItDown()
-    
-    return {
-        "status": "ok",
-        "components": {
-            "pydantic_ai": "initialized",
-            "markitdown": "initialized",
-            "pymupdf": "available",
-            "sqlmodel": "ready"
-        }
-    }
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+setup_interaction_tracking_middleware(app)
+
+# GẮN MASTER ROUTER VÀO APP
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 if __name__ == "__main__":
-    print(f"🚀 Sidecar starting on http://127.0.0.1:14201")
-    uvicorn.run(app, host="127.0.0.1", port=14201, log_level="info")
+    app.state.watchdog.start(lambda: app.state.system_state.total_active_work)
+    _logger.info(f"🚀 Starting Uvicorn on {settings.HOST}:{settings.PORT}")
+    uvicorn.run(app, host=settings.HOST, port=settings.PORT, reload=False)

@@ -1,49 +1,57 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useAppStore, hasActiveOperations } from './stores/useAppStore';
+import { apiClient } from './lib/axios';
+import { StartupOverlay } from './components/layout/StartupOverlay';
+import { Layout } from './components/layout/Layout';
 import { invoke } from '@tauri-apps/api/core';
-import axios from 'axios';
 
 function App() {
-  const [status, setStatus] = useState<string>("Initializing...");
+  const { isDarkMode, isBackendReady, setBackendReady, minDisplayTimeReached, setMinDisplayTimeReached, setConnectionError, t } = useAppStore();
+  const retryCountRef = useRef(0);
 
   useEffect(() => {
-    const initSidecar = async () => {
+    const displayTimer = setTimeout(() => setMinDisplayTimeReached(true), 2500);
+    const sidecarTimer = setTimeout(async () => {
+      try { await invoke('start_sidecar'); } catch (err) { console.error(err); }
+    }, 1000);
+    return () => { clearTimeout(displayTimer); clearTimeout(sidecarTimer); };
+  }, [setMinDisplayTimeReached]);
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (hasActiveOperations()) return;
       try {
-        console.log("[System] Triggering Sidecar...");
-        await invoke('start_sidecar');
-        
-        // Polling để check khi nào sidecar thực sự up
-        let retries = 0;
-        const checkHealth = async () => {
-          try {
-            const res = await axios.get("http://127.0.0.1:14201/health");
-            if (res.data.status === "ok") {
-              setStatus("Connected to Sidecar! PydanticAI & MarkItDown Ready.");
-            }
-          } catch (e) {
-            if (retries < 10) {
-              retries++;
-              setTimeout(checkHealth, 1000);
-            } else {
-              setStatus("Sidecar connection timeout.");
-            }
-          }
-        };
-        checkHealth();
-      } catch (err) {
-        setStatus("Failed to start sidecar.");
+        await apiClient.get('/health', { timeout: 3000 });
+        if (!isBackendReady) { setBackendReady(true); setConnectionError(null); }
+      } catch (e) {
+        if (!isBackendReady) {
+          retryCountRef.current += 1;
+          if (retryCountRef.current >= 30) setConnectionError("Sidecar connection timeout. Check port 14201.");
+        }
       }
     };
+    const interval = setInterval(checkConnection, isBackendReady ? 8000 : 1500);
+    return () => clearInterval(interval);
+  },[isBackendReady, setBackendReady, setConnectionError]);
 
-    initSidecar();
-  }, []);
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, [isDarkMode]);
+
+  const canEnterApp = isBackendReady && minDisplayTimeReached;
 
   return (
-    <div className="h-screen bg-slate-950 text-white flex flex-col items-center justify-center gap-4">
-      <h1 className="text-4xl font-black italic">ARCH LENS AI</h1>
-      <div className="px-4 py-2 bg-slate-800 rounded-full text-xs font-mono text-blue-400 border border-blue-900/30">
-        Status: {status}
-      </div>
-    </div>
+    <>
+      <StartupOverlay canEnter={canEnterApp} />
+      {canEnterApp && (
+        <Layout>
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-4 animate-in fade-in zoom-in-95">
+            <h1 className="text-4xl font-black tracking-tight">{t.welcome} <span className="text-blue-600">Arch Lens AI</span></h1>
+            <p className="text-slate-500 max-w-lg">{t.subtitle}</p>
+          </div>
+        </Layout>
+      )}
+    </>
   );
 }
 

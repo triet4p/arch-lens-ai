@@ -59,6 +59,7 @@ def build():
         "--copy-metadata", "pydantic_ai",
         "--copy-metadata", "markitdown",
         "--copy-metadata", "genai_prices",
+        "--copy-metadata", "logfire",
     ]
 
     cmd = [

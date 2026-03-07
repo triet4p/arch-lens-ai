@@ -4,9 +4,12 @@ import { apiClient } from './lib/axios';
 import { StartupOverlay } from './components/layout/StartupOverlay';
 import { Layout } from './components/layout/Layout';
 import { invoke } from '@tauri-apps/api/core';
+import { WorkspaceList } from './views/WorkspaceList';
+import { WorkspaceDetail } from './views/WorkspaceDetail';
 
 function App() {
-  const { isDarkMode, isBackendReady, setBackendReady, minDisplayTimeReached, setMinDisplayTimeReached, setConnectionError, t } = useAppStore();
+  const { isDarkMode, isBackendReady, setBackendReady, minDisplayTimeReached, 
+    setMinDisplayTimeReached, setConnectionError, currentView, selectedWorkspaceId } = useAppStore();
   const retryCountRef = useRef(0);
 
   useEffect(() => {
@@ -45,10 +48,18 @@ function App() {
       <StartupOverlay canEnter={canEnterApp} />
       {canEnterApp && (
         <Layout>
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-4 animate-in fade-in zoom-in-95">
-            <h1 className="text-4xl font-black tracking-tight">{t.welcome} <span className="text-blue-600">Arch Lens AI</span></h1>
-            <p className="text-slate-500 max-w-lg">{t.subtitle}</p>
-          </div>
+          {selectedWorkspaceId ? (
+            <WorkspaceDetail />
+          ) : (
+            <>
+              {currentView === 'workspaces' && <WorkspaceList />}
+              {currentView === 'tech_radar' && (
+                <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                  <h2 className="text-2xl font-black opacity-20 uppercase tracking-widest">Tech Radar Coming Soon</h2>
+                </div>
+              )}
+            </>
+          )}
         </Layout>
       )}
     </>

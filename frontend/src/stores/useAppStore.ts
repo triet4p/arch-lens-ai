@@ -12,6 +12,7 @@ interface AppState {
     connectionError: string | null;
     activeOperations: Set<string>;
     minDisplayTimeReached: boolean;
+    selectedWorkspaceId: number | null;
 
     toggleTheme: () => void;
     setLanguage: (lang: 'en' | 'vi') => void;
@@ -21,6 +22,7 @@ interface AppState {
     addOperation: (id: string) => void;
     removeOperation: (id: string) => void;
     setMinDisplayTimeReached: (status: boolean) => void;
+    setSelectedWorkspaceId: (id: number | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -32,6 +34,7 @@ export const useAppStore = create<AppState>((set) => ({
     connectionError: null,
     activeOperations: new Set(),
     minDisplayTimeReached: false,
+    selectedWorkspaceId: null,
 
     toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
     // Sửa lại hàm này để cập nhật cả object `t`
@@ -50,6 +53,7 @@ export const useAppStore = create<AppState>((set) => ({
         return { activeOperations: newOps };
     }),
     setMinDisplayTimeReached: (status) => set({ minDisplayTimeReached: status }),
+    setSelectedWorkspaceId: (id) => set({ selectedWorkspaceId: id }),
 }));
 
 export const hasActiveOperations = (): boolean => {

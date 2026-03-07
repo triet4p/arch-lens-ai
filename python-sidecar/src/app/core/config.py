@@ -39,7 +39,13 @@ class Settings(BaseSettings):
         extra='ignore'
     )
     
+    def model_post_init(self, __context):
+        """Expand ~ paths after model initialization"""
+        print(f"[CONFIG] Expanding paths...")
+        self.WORKSPACE_STORAGE_DIR = os.path.expanduser(self.WORKSPACE_STORAGE_DIR)
+        self.LOGGING_FILE_DIR = os.path.expanduser(self.LOGGING_FILE_DIR)
+    
 settings = Settings()
 
 # Đảm bảo thư mục lưu trữ tồn tại ngay khi khởi động
-os.makedirs(os.path.expanduser(settings.WORKSPACE_STORAGE_DIR), exist_ok=True)
+os.makedirs(settings.WORKSPACE_STORAGE_DIR, exist_ok=True)

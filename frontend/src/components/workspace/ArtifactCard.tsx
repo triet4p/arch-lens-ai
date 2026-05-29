@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Github, FileCode, ExternalLink, PlayCircle, Trash2, Clock, BookOpen } from 'lucide-react';
+import { Github, FileCode, ExternalLink, PlayCircle, Trash2, Clock, BookOpen } from 'lucide-react';
 import type { ArtifactRead } from '../../types/api';
 
 interface Props {

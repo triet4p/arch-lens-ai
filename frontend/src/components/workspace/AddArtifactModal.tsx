@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, BookOpen, Github, Upload, Send, Loader2, FileUp } from 'lucide-react';
+import { X, BookOpen, Github, Send, Loader2, FileUp } from 'lucide-react';
 import { useArtifacts } from '../../hooks/useArtifacts';
 
 interface Props {

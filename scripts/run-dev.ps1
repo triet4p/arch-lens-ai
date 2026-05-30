@@ -10,7 +10,6 @@ param(
 $ErrorActionPreference = 'Stop'
 $ROOT = Resolve-Path (Join-Path $PSScriptRoot '..')
 $SIDECAR_BINARY = Join-Path $ROOT 'src-tauri\binaries\arch-lens-ai-backend-x86_64-pc-windows-msvc.exe'
-$ICON_SOURCE = Join-Path $ROOT 'assets\app-logo.png'
 Set-Location $ROOT
 
 function Assert-Command([string]$name) {
@@ -51,16 +50,12 @@ if ($RebuildSidecar) {
     }
 }
 
+Write-Step '[DEV-SCRIPT] Preparing Tauri assets and clearing stale repo-owned Node.js processes...' 'Cyan'
+$ensureArgs = @('-StopNodeProcesses')
 if ($RefreshIcons) {
-    if (-not (Test-Path $ICON_SOURCE)) {
-        throw "Cannot refresh icons because source image is missing: $ICON_SOURCE"
-    }
-
-    Write-Step '[DEV-SCRIPT] 🎨 Refreshing Tauri icons from assets/app-logo.png ...'
-    npx tauri icon $ICON_SOURCE
-} else {
-    Write-Step '[DEV-SCRIPT] ℹ️  Skipping icon refresh (use -RefreshIcons to regenerate icons).' 'Cyan'
+    $ensureArgs += '-ForceRefresh'
 }
+& pwsh (Join-Path $ROOT 'scripts\ensure-tauri-assets.ps1') @ensureArgs
 
 Write-Step '[DEV-SCRIPT] 🚀 Starting Tauri Dev Environment...' 'Cyan'
 Write-Host '-----------------------------------------------------------------------'

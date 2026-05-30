@@ -67,9 +67,12 @@ jobs:
       - name: Smoke packaged sidecar
         run: pwsh scripts/smoke-sidecar.ps1
 
+      - name: Ensure Tauri icons
+        run: pwsh scripts/ensure-tauri-assets.ps1
+
       - name: Cargo check
         run: cargo check
         working-directory: src-tauri
 
       - name: Build Tauri installer
-        run: npx tauri build --bundles nsis
+        run: pwsh scripts/build-tauri.ps1 -Bundles nsis

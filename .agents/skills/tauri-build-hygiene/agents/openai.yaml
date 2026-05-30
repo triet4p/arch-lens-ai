@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tauri Build Hygiene"
+  short_description: "Safe Tauri dev/build workflow for this repo"
+  default_prompt: "Use this skill when running or changing Tauri dev/build flows in this repo. Clear stale repo Node processes, ensure icons exist, and prefer the repo wrapper scripts."

@@ -12,6 +12,12 @@ $ErrorActionPreference = 'Stop'
 $ROOT = Resolve-Path (Join-Path $PSScriptRoot '..')
 $v = $Version
 
+function Assert-Command([string]$name) {
+    if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
+        throw "Required command '$name' was not found in PATH."
+    }
+}
+
 function Update-File([string]$label, [scriptblock]$action) {
     try {
         & $action
@@ -22,48 +28,71 @@ function Update-File([string]$label, [scriptblock]$action) {
     }
 }
 
-Write-Host ''
-Write-Host "  Bumping version to $v ..." -ForegroundColor Cyan
-Write-Host ''
-
-# ── JSON files ────────────────────────────────────────────────────────────────
-foreach ($f in @('package.json', 'frontend/package.json', 'src-tauri/tauri.conf.json')) {
-    Update-File $f {
-        $path = Join-Path $ROOT $f
-        $j = Get-Content $path -Raw | ConvertFrom-Json
-        $j.version = $v
-        $j | ConvertTo-Json -Depth 100 | Set-Content $path -Encoding utf8NoBOM
+function Update-JsonVersion([string]$relativePath) {
+    Update-File $relativePath {
+        $path = Join-Path $ROOT $relativePath
+        $json = Get-Content $path -Raw | ConvertFrom-Json
+        $json.version = $v
+        $json | ConvertTo-Json -Depth 100 | Set-Content $path -Encoding utf8NoBOM
     }
 }
 
-# ── Lock files ────────────────────────────────────────────────────────────────
-# Dùng regex thay thế trực tiếp để tránh lỗi parse với key rỗng "" trong lockfileV3
-foreach ($f in @('package-lock.json', 'frontend/package-lock.json')) {
-    Update-File $f {
-        $path = Join-Path $ROOT $f
-        $raw  = Get-Content $path -Raw
-        $raw  = $raw -replace '(?m)^  "version": "[^"]+"', "  `"version`": `"$v`""
-        Set-Content $path $raw -Encoding utf8NoBOM -NoNewline
+function Update-PackageLockVersion([string]$relativePath) {
+    Update-File $relativePath {
+        $path = Join-Path $ROOT $relativePath
+        $nodeScript = @'
+const fs = require("fs");
+const path = process.argv[1];
+const version = process.argv[2];
+const lock = JSON.parse(fs.readFileSync(path, "utf8"));
+lock.version = version;
+if (lock.packages && lock.packages[""]) {
+  lock.packages[""].version = version;
+}
+fs.writeFileSync(path, JSON.stringify(lock, null, 2) + "\n", "utf8");
+'@
+        $nodeScript | node - $path $v
     }
 }
 
-# ── TOML files ────────────────────────────────────────────────────────────────
-foreach ($info in @(
-    @{ f = 'src-tauri/Cargo.toml';          section = '[package]' }
-    @{ f = 'python-sidecar/pyproject.toml'; section = '[project]' }
-)) {
-    Update-File $info.f {
-        $path  = Join-Path $ROOT $info.f
+function Update-TomlVersion([string]$relativePath, [string]$section) {
+    Update-File $relativePath {
+        $path = Join-Path $ROOT $relativePath
         $inSec = $false
-        $out   = foreach ($l in (Get-Content $path)) {
-            if    ($l -eq $info.section)                    { $inSec = $true;  $l }
-            elseif($l -match '^\[')                         { $inSec = $false; $l }
-            elseif($inSec -and $l -match '^version\s*=')   { "version = `"$v`"" }
-            else  { $l }
+        $out = foreach ($line in (Get-Content $path)) {
+            if ($line -eq $section) { $inSec = $true; $line; continue }
+            if ($line -match '^\[') { $inSec = $false; $line; continue }
+            if ($inSec -and $line -match '^version\s*=') { "version = `"$v`""; continue }
+            $line
         }
         Set-Content $path $out -Encoding utf8NoBOM
     }
 }
+
+Write-Host ''
+Write-Host "  Bumping version to $v ..." -ForegroundColor Cyan
+Write-Host ''
+
+Assert-Command 'node'
+Assert-Command 'pwsh'
+
+foreach ($file in @('package.json', 'frontend/package.json', 'src-tauri/tauri.conf.json')) {
+    Update-JsonVersion $file
+}
+
+foreach ($file in @('package-lock.json', 'frontend/package-lock.json')) {
+    Update-PackageLockVersion $file
+}
+
+Update-TomlVersion 'src-tauri/Cargo.toml' '[package]'
+Update-TomlVersion 'python-sidecar/pyproject.toml' '[project]'
+
+$checkScript = Join-Path $ROOT 'scripts/check-version-sync.ps1'
+if (-not (Test-Path $checkScript)) {
+    throw "Version sync check script not found at $checkScript"
+}
+
+& $checkScript -ExpectedVersion $v
 
 Write-Host ''
 Write-Host "  Done. All files bumped to $v." -ForegroundColor Cyan

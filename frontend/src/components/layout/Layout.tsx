@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../../stores/useAppStore';
-import { FolderKanban, Activity, Sun, Moon, Languages, ScanSearch } from 'lucide-react';
+import { FolderKanban, Activity, Sun, Moon, Languages, ScanSearch, SlidersHorizontal } from 'lucide-react';
+import { NotificationCenter } from './NotificationCenter';
 
 export const Layout: React.FC<{children: React.ReactNode}> = ({ children }) => {
     const { currentView, setView, isDarkMode, toggleTheme, language, setLanguage, setSelectedWorkspaceId, t } = useAppStore();
@@ -21,6 +22,9 @@ export const Layout: React.FC<{children: React.ReactNode}> = ({ children }) => {
                     <button onClick={() => { setSelectedWorkspaceId(null); setView('tech_radar'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${currentView === 'tech_radar' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50'}`}>
                         <Activity size={18} /> {t.techRadar}
                     </button>
+                    <button onClick={() => { setSelectedWorkspaceId(null); setView('settings'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${currentView === 'settings' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50'}`}>
+                        <SlidersHorizontal size={18} /> {t.settings}
+                    </button>
                 </div>
 
 
@@ -28,6 +32,7 @@ export const Layout: React.FC<{children: React.ReactNode}> = ({ children }) => {
 
             {/* Main Content Area */}
             <div className="flex flex-col flex-1 min-w-0">
+                <NotificationCenter />
                 {/* Topbar */}
                 <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-end px-6 sticky top-0 z-10">
                     <div className="flex items-center gap-2">

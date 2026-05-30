@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../../stores/useAppStore';
-import { AlertCircle, Sparkles, ScanSearch } from 'lucide-react';
+import { AlertCircle, RefreshCw, ScanSearch, Sparkles } from 'lucide-react';
 
 const LOADING_MESSAGES =[
     "Waking up the Evaluation Engine...",
@@ -10,9 +11,10 @@ const LOADING_MESSAGES =[
 ];
 
 export const StartupOverlay: React.FC<{canEnter: boolean}> = ({ canEnter }) => {
-    const { connectionError } = useAppStore();
+    const { connectionError, setConnectionError, pushNotification } = useAppStore();
     const [messageIndex, setMessageIndex] = useState(0);
     const[shouldRender, setShouldRender] = useState(true);
+    const [retrying, setRetrying] = useState(false);
 
     useEffect(() => {
         if (canEnter) return;
@@ -28,6 +30,29 @@ export const StartupOverlay: React.FC<{canEnter: boolean}> = ({ canEnter }) => {
     }, [canEnter]);
 
     if (!shouldRender) return null;
+
+    const handleRetry = async () => {
+        setRetrying(true);
+        setConnectionError(null);
+        try {
+            await invoke('start_sidecar');
+            pushNotification({
+                tone: 'info',
+                title: 'Retry started',
+                message: 'Another sidecar start attempt was issued.',
+            });
+        } catch (error: any) {
+            const message = error?.message || 'Unable to retry the sidecar startup.';
+            setConnectionError(message);
+            pushNotification({
+                tone: 'error',
+                title: 'Retry failed',
+                message,
+            });
+        } finally {
+            setRetrying(false);
+        }
+    };
 
     return (
         <div className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 transition-all duration-1000 ease-in-out ${canEnter ? 'opacity-0 pointer-events-none scale-110' : 'opacity-100'}`}>
@@ -48,6 +73,14 @@ export const StartupOverlay: React.FC<{canEnter: boolean}> = ({ canEnter }) => {
                             <AlertCircle size={24} /><span className="font-bold text-sm">Connection Failed</span>
                         </div>
                         <p className="text-xs text-red-500 dark:text-red-300 mb-6 text-center">{connectionError}</p>
+                        <button
+                            onClick={handleRetry}
+                            disabled={retrying}
+                            className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-xs font-black uppercase tracking-wide text-white disabled:opacity-60"
+                        >
+                            {retrying ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                            Retry sidecar start
+                        </button>
                     </div>
                 ) : (
                     <div className="w-full space-y-6">

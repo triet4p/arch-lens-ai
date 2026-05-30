@@ -29,9 +29,9 @@ def get_target_triple():
         raise Exception(f"Unsupported platform: {system}")
 
 def build():
-    print(f"🚀 Starting Build Process (Legacy Logic)...")
-    print(f"   Root:   {PROJECT_ROOT}")
-    print(f"   Output: {DIST_DIR}")
+    print("Starting build process...")
+    print(f"  Root:   {PROJECT_ROOT}")
+    print(f"  Output: {DIST_DIR}")
 
     os.makedirs(DIST_DIR, exist_ok=True)
 
@@ -49,6 +49,7 @@ def build():
         "--collect-all", "magika",
         "--collect-all", "pymupdf4llm",
         "--collect-all", "pymupdf",
+        "--collect-all", "keyring",
         
         # Copy metadata để tránh lỗi 'Package not found' lúc runtime
         "--copy-metadata", "tqdm",
@@ -62,10 +63,13 @@ def build():
         "--copy-metadata", "magika",
         "--copy-metadata", "genai_prices",
         "--copy-metadata", "logfire",
+        "--copy-metadata", "keyring",
     ]
 
     cmd = [
-        "pyinstaller",
+        sys.executable,
+        "-m",
+        "PyInstaller",
         "--clean",
         "--noconfirm",
         "--onefile",
@@ -76,11 +80,11 @@ def build():
     ] + add_data_arg + aggressive_args + [SRC_PATH]
     
     try:
-        print("🔨 Running PyInstaller (This might take a while)...")
+        print("Running PyInstaller. This might take a while...")
         # Tuyệt đối KHÔNG có flag --strip ở đây trên Windows
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError:
-        print("❌ Build Failed.")
+        print("Build failed.")
         sys.exit(1)
     
     # Rename logic (Chuẩn Tauri Sidecar)
@@ -95,9 +99,9 @@ def build():
         
     if os.path.exists(original_file):
         os.rename(original_file, target_file)
-        print(f"✅ Build Success! Binary ready at: {target_file}")
+        print(f"Build succeeded. Binary ready at: {target_file}")
     else:
-        print(f"❌ Error: Original binary not found at {original_file}")
+        print(f"Error: original binary not found at {original_file}")
         sys.exit(1)
 
 if __name__ == "__main__":

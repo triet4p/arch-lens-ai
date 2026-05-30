@@ -14,24 +14,24 @@ This file is the source of truth for the project plan. Detailed task breakdowns 
   Persisted analysis models, backend analysis endpoints, parsing pipeline, and UI rendering for artifact-level due diligence.
 * [x] **Milestone 3: Cross-verification and strategic outputs**
   Workspace-level reasoning across artifacts, Tech Radar, and export/reporting flows.
-* [ ] **Milestone 4: Hardening and release readiness**
-  Automated tests, error handling, provider/settings UX, and packaging stability.
+* [x] **Milestone 4: Hardening and release readiness**
+  Packaging/runtime stability, desktop-native UX hardening, broader automated coverage, provider/settings UX, version governance, and GitHub release automation.
 
 ## Active Sprints
 
-No active sprint is currently defined. The next planning step is Sprint 4.
+* No active sprint is currently defined. Sprint planning should start from the next milestone or backlog cut.
 
 ## Completed Sprints
 
 * [Sprint 1](docs/sprint-plans/sprint-1.md) - *Status: Done*
 * [Sprint 2](docs/sprint-plans/sprint-2.md) - *Status: Done*
 * [Sprint 3](docs/sprint-plans/sprint-3.md) - *Status: Done*
+* [Sprint 4](docs/sprint-plans/sprint-4.md) - *Status: Done*
 
 ## Backlog / Future Work
 
 * Cross-artifact chat and contextual RAG over workspace data
 * Enterprise Tech Radar aggregation views
-* Markdown/PDF report export
-* AI provider settings and credential management UX
-* Backend and frontend automated test coverage
+* Signed release distribution and updater pipeline
+* Richer frontend integration coverage around full workspace flows
 * Better progress reporting for long-running analysis tasks

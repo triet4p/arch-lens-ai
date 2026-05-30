@@ -12,6 +12,7 @@ from src.app.services.ingestion import ArxivIngestor, LocalIngestor, GithubInges
 from src.app.services.artifact import ArtifactService
 from src.app.services.analysis import AnalysisService
 from src.app.services.review import WorkspaceReviewService
+from src.app.services.settings import AISettingsService
 
 # 1. Base Session Dependency
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -82,7 +83,12 @@ def get_workspace_review_service(
 ) -> WorkspaceReviewService:
     return WorkspaceReviewService(workspace_repo, analysis_repo)
 
+
+def get_ai_settings_service() -> AISettingsService:
+    return AISettingsService()
+
 WorkspaceServiceDep = Annotated[WorkspaceService, Depends(get_workspace_service)]
 ArtifactServiceDep = Annotated[ArtifactService, Depends(get_artifact_service)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
 WorkspaceReviewServiceDep = Annotated[WorkspaceReviewService, Depends(get_workspace_review_service)]
+AISettingsServiceDep = Annotated[AISettingsService, Depends(get_ai_settings_service)]

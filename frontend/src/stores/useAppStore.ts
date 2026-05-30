@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { TRANSLATIONS } from '../constants/translations';
 
-export type ViewMode = 'workspaces' | 'tech_radar';
+export type ViewMode = 'workspaces' | 'tech_radar' | 'settings';
+
+export interface AppNotification {
+    id: string;
+    title: string;
+    message: string;
+    tone: 'info' | 'success' | 'error';
+}
 
 interface AppState {
     isDarkMode: boolean;
@@ -13,6 +20,7 @@ interface AppState {
     activeOperations: Set<string>;
     minDisplayTimeReached: boolean;
     selectedWorkspaceId: number | null;
+    notifications: AppNotification[];
 
     toggleTheme: () => void;
     setLanguage: (lang: 'en' | 'vi') => void;
@@ -23,6 +31,8 @@ interface AppState {
     removeOperation: (id: string) => void;
     setMinDisplayTimeReached: (status: boolean) => void;
     setSelectedWorkspaceId: (id: number | null) => void;
+    pushNotification: (notification: Omit<AppNotification, 'id'>) => void;
+    removeNotification: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -35,6 +45,7 @@ export const useAppStore = create<AppState>((set) => ({
     activeOperations: new Set(),
     minDisplayTimeReached: false,
     selectedWorkspaceId: null,
+    notifications: [],
 
     toggleTheme: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
     // Sửa lại hàm này để cập nhật cả object `t`
@@ -54,6 +65,13 @@ export const useAppStore = create<AppState>((set) => ({
     }),
     setMinDisplayTimeReached: (status) => set({ minDisplayTimeReached: status }),
     setSelectedWorkspaceId: (id) => set({ selectedWorkspaceId: id }),
+    pushNotification: (notification) => set((state) => {
+        const id = crypto.randomUUID();
+        return { notifications: [...state.notifications, { id, ...notification }] };
+    }),
+    removeNotification: (id) => set((state) => ({
+        notifications: state.notifications.filter((notification) => notification.id !== id),
+    })),
 }));
 
 export const hasActiveOperations = (): boolean => {

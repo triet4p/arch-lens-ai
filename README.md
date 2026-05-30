@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Tauri-v2-24C8D8?logo=tauri&logoColor=white" alt="Tauri v2"/>
-  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/Python-3.13+-3776AB?logo=python&logoColor=white" alt="Python"/>
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React 19"/>
   <img src="https://img.shields.io/badge/PydanticAI-Agents-E92063?logo=pydantic&logoColor=white" alt="PydanticAI"/>
   <img src="https://img.shields.io/badge/Privacy-First-2ECC71?logo=shield&logoColor=white" alt="Privacy First"/>
@@ -30,15 +30,15 @@ Khác với các công cụ Cloud, mọi dữ liệu nội bộ của bạn — 
 
 ---
 
-## ✨ Tính năng cốt lõi (5 Trụ cột)
+## ✨ Tính năng cốt lõi
 
 | Trụ cột | Mô tả |
 | :--- | :--- |
-| 📁 **Local Workspace** | Upload tài liệu nội bộ (PDF, DOCX, PPTX, MD) làm "bộ lọc" ngữ cảnh cho AI |
-| 🔬 **GitHub Due Diligence** | Smart Sampling: phân tích Repo theo License/Health/Integration mà không cần clone |
-| 📄 **Feasibility & ROI Analyzer** | Thẩm định Research Papers: tách Resource Footprint, đối chiếu với PRD của bạn |
-| 🧠 **Cross-Verification RAG** | Multi-Agent chat: đối chiếu đồng thời Paper + Code + Tài liệu nội bộ |
-| 📡 **Enterprise Tech Radar** | Tổng hợp kết quả thẩm định thành Radar 4 vòng: Adopt / Trial / Assess / Hold |
+| 📁 **Workspace-centric ingestion** | Tạo workspace và ingest artifact từ local file, GitHub repo, và ArXiv paper |
+| 🔬 **Artifact analysis pipeline** | Phân tích từng artifact, persist analysis record, summary, và score cục bộ |
+| 🧠 **Workspace review** | Đối chiếu analysis records với business constraints để sinh findings, conflicts, và decision summary |
+| 📡 **Tech Radar** | Tổng hợp signal công nghệ thành Adopt / Trial / Assess / Hold ở cấp workspace |
+| ⚙️ **Local AI settings** | Quản lý provider, API key status, model defaults, và task routing ngay trong desktop app |
 
 ---
 
@@ -52,7 +52,7 @@ Khác với các công cụ Cloud, mọi dữ liệu nội bộ của bạn — 
                    │ IPC              │ IPC
         ┌──────────▼──────────┐  ┌───▼─────────────────┐
         │   React 19 (TS)     │  │  FastAPI Sidecar     │
-        │   TanStack Query    │  │  (Python 3.11+)      │
+        │   TanStack Query    │  │  (Python 3.13+)      │
         │   Zustand           │  │  PydanticAI Agents   │
         │   Vite              │  │  SQLite (SQLModel)   │
         └─────────────────────┘  └─────────────────────┘
@@ -73,7 +73,7 @@ Khác với các công cụ Cloud, mọi dữ liệu nội bộ của bạn — 
 ### Yêu cầu hệ thống (Prerequisites)
 - [Node.js](https://nodejs.org/) (v18+) & `npm`
 - [Rust & Cargo](https://rustup.rs/) (Yêu cầu C++ Build Tools trên Windows)
-- [Python](https://www.python.org/) (v3.11+)
+- [Python](https://www.python.org/) (v3.13+)
 - [uv](https://github.com/astral-sh/uv) (Trình quản lý package Python siêu tốc)
 - [PowerShell 7+](https://aka.ms/install-powershell) (`pwsh`) — dùng cho tất cả automation scripts
   ```bash
@@ -133,12 +133,28 @@ arch-lens-ai/
 
 ---
 
+## 📌 Current Product State
+
+- [x] Desktop shell + Python sidecar orchestration
+- [x] Workspace CRUD
+- [x] Artifact ingestion for local files, GitHub, and ArXiv
+- [x] Persisted single-artifact analysis
+- [x] Workspace-level review and Tech Radar
+- [x] Markdown report export
+- [x] AI provider/settings surface
+- [x] Release hardening, CI/CD, and broader packaging UX
+- [ ] Deeper PydanticAI multi-step reasoning
+- [ ] Cross-artifact chat / contextual RAG
+- [ ] Signed release distribution
+
+---
+
 ## 🗺️ Lộ trình Phát triển (Roadmap)
 
-- [x] **Phase 1: The Foundation** (Hoàn thiện hạ tầng Rust-Python-React, Setup Watchdog & IPC).
-- [ ] **Phase 2: The Workspace Engine** (Chuyển đổi sang Workspace-centric, Setup SQLModel, Ingestion file PRD/Docx).
-- [ ] **Phase 3: The Intelligence Layer** (Tích hợp PydanticAI, Vectorless RAG, Code & Paper Agents).
-- [ ] **Phase 4: The Strategic Lens** (Cross-verification Agent, Tech Radar, Export báo cáo Due Diligence).
+- [x] **Milestone 1: Desktop foundation and workspace ingestion**
+- [x] **Milestone 2: Single-artifact analysis pipeline**
+- [x] **Milestone 3: Cross-verification and strategic outputs**
+- [x] **Milestone 4: Hardening and release readiness**
 
 ---
 

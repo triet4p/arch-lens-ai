@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      CARGO_BUILD_JOBS: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Sync Python dependencies
+        run: uv sync --frozen
+        working-directory: python-sidecar
+
+      - name: Check version sync
+        run: pwsh scripts/check-version-sync.ps1
+
+      - name: Validate tag matches manifest version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart("v")
+          $manifest = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($tag -ne $manifest) {
+            throw "Tag version $tag does not match manifest version $manifest"
+          }
+
+      - name: Run backend tests
+        run: uv run pytest -v
+        working-directory: python-sidecar
+
+      - name: Build packaged sidecar
+        run: uv run python -m scripts.build_sidecar
+        working-directory: python-sidecar
+
+      - name: Smoke packaged sidecar
+        run: pwsh scripts/smoke-sidecar.ps1
+
+      - name: Build Tauri installer
+        run: npx tauri build --bundles nsis
+
+      - name: Resolve release asset
+        id: asset
+        shell: pwsh
+        run: |
+          $asset = Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          if (-not $asset) {
+            throw "No NSIS setup executable was produced."
+          }
+          "path=$($asset.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Arch Lens AI ${{ github.ref_name }}
+          files: ${{ steps.asset.outputs.path }}

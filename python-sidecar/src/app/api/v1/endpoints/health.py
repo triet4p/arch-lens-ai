@@ -1,5 +1,11 @@
+import os
+import sys
+from pathlib import Path
+
 from fastapi import APIRouter, Request
 import time
+
+from src.app.core.config import get_env_path, settings
 
 router = APIRouter()
 
@@ -34,4 +40,28 @@ async def health_check(request: Request):
         "active_requests": active_requests,
         "busy": active_requests > 0,
         "components": components_status
+    }
+
+
+@router.get("/health/runtime")
+async def runtime_diagnostics():
+    database_path = settings.sqlite_database_path
+    env_path = Path(get_env_path())
+
+    return {
+        "status": "alive",
+        "frozen": bool(getattr(sys, "frozen", False)),
+        "python_executable": sys.executable,
+        "cwd": os.getcwd(),
+        "database_url": settings.DATABASE_URL,
+        "database_path": database_path,
+        "database_exists": bool(database_path and os.path.exists(database_path)),
+        "workspace_storage_dir": settings.WORKSPACE_STORAGE_DIR,
+        "workspace_storage_exists": os.path.exists(settings.WORKSPACE_STORAGE_DIR),
+        "logging_file_dir": settings.LOGGING_FILE_DIR,
+        "logging_file_dir_exists": os.path.exists(settings.LOGGING_FILE_DIR),
+        "ai_settings_file": settings.AI_SETTINGS_FILE,
+        "ai_settings_exists": os.path.exists(settings.AI_SETTINGS_FILE),
+        "env_file": str(env_path),
+        "env_file_exists": env_path.exists(),
     }

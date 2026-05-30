@@ -1,9 +1,30 @@
+import os
+import shutil
 from typing import Any, Generator
 
 from sqlalchemy import event, inspect, text
 from sqlmodel import SQLModel, Session, create_engine
 
 from src.app.core.config import settings
+
+
+def _migrate_legacy_sqlite_database() -> None:
+    target_path = settings.sqlite_database_path
+    if not target_path:
+        return
+
+    legacy_path = os.path.abspath("arch_lens.db")
+    if os.path.abspath(target_path) == legacy_path:
+        return
+
+    if os.path.exists(target_path) or not os.path.exists(legacy_path):
+        return
+
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    shutil.copy2(legacy_path, target_path)
+
+
+_migrate_legacy_sqlite_database()
 
 # check_same_thread=False bắt buộc cho SQLite trong FastAPI
 engine = create_engine(

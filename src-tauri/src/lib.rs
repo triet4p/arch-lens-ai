@@ -1,3 +1,5 @@
+use rfd::FileDialog;
+use std::fs;
 use std::sync::Mutex;
 use tauri::{Manager, State};
 use tauri_plugin_shell::process::CommandEvent;
@@ -21,12 +23,16 @@ async fn start_sidecar(
     }
 
     let handle = app_handle.clone();
+    let sidecar_command = handle
+        .shell()
+        .sidecar("arch-lens-ai-backend")
+        .map_err(|error| format!("Unable to resolve sidecar: {error}"))?;
+    let (mut rx, _child) = sidecar_command
+        .spawn()
+        .map_err(|error| format!("Failed to spawn sidecar: {error}"))?;
 
     // Spawn Sidecar trong một luồng riêng
     tauri::async_runtime::spawn(async move {
-        let sidecar_command = handle.shell().sidecar("arch-lens-ai-backend").unwrap();
-        let (mut rx, _child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
-
         while let Some(event) = rx.recv().await {
             match event {
                 CommandEvent::Stdout(line) => {
@@ -46,6 +52,18 @@ async fn start_sidecar(
     Ok("Sidecar start command issued".into())
 }
 
+#[tauri::command]
+async fn save_markdown_report(default_file_name: String, content: String) -> Result<String, String> {
+    let path = FileDialog::new()
+        .set_file_name(&default_file_name)
+        .add_filter("Markdown", &["md"])
+        .save_file()
+        .ok_or_else(|| "Save cancelled".to_string())?;
+
+    fs::write(&path, content).map_err(|error| format!("Unable to write report: {error}"))?;
+    Ok(path.display().to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -61,17 +79,24 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             // Lấy window chính
-            let window = app.get_webview_window("main").unwrap();
+            let Some(window) = app.get_webview_window("main") else {
+                log::error!("Main window not found during setup");
+                return Ok(());
+            };
 
             // Phóng to full màn hình
-            window.maximize().unwrap();
+            if let Err(error) = window.maximize() {
+                log::warn!("Unable to maximize window: {}", error);
+            }
 
             // Hiện cửa sổ lên sau khi đã phóng to xong
-            window.show().unwrap();
+            if let Err(error) = window.show() {
+                log::warn!("Unable to show window: {}", error);
+            }
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![start_sidecar])
+        .invoke_handler(tauri::generate_handler![start_sidecar, save_markdown_report])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

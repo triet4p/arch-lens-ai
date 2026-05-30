@@ -7,19 +7,26 @@ import { invoke } from '@tauri-apps/api/core';
 import { WorkspaceList } from './views/WorkspaceList';
 import { WorkspaceDetail } from './views/WorkspaceDetail';
 import { TechRadarView } from './views/TechRadarView';
+import { AISettingsView } from './views/AISettingsView';
 
 function App() {
   const { isDarkMode, isBackendReady, setBackendReady, minDisplayTimeReached, 
-    setMinDisplayTimeReached, setConnectionError, currentView, selectedWorkspaceId } = useAppStore();
+    setMinDisplayTimeReached, setConnectionError, currentView, selectedWorkspaceId, pushNotification } = useAppStore();
   const retryCountRef = useRef(0);
 
   useEffect(() => {
     const displayTimer = setTimeout(() => setMinDisplayTimeReached(true), 2500);
     const sidecarTimer = setTimeout(async () => {
-      try { await invoke('start_sidecar'); } catch (err) { console.error(err); }
+      try {
+        await invoke('start_sidecar');
+      } catch (err: any) {
+        const message = err?.message || 'Unable to start the Python sidecar.';
+        setConnectionError(message);
+        pushNotification({ tone: 'error', title: 'Sidecar failed', message });
+      }
     }, 1000);
     return () => { clearTimeout(displayTimer); clearTimeout(sidecarTimer); };
-  }, [setMinDisplayTimeReached]);
+  }, [pushNotification, setConnectionError, setMinDisplayTimeReached]);
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -55,6 +62,7 @@ function App() {
             <>
               {currentView === 'workspaces' && <WorkspaceList />}
               {currentView === 'tech_radar' && <TechRadarView />}
+              {currentView === 'settings' && <AISettingsView />}
             </>
           )}
         </Layout>

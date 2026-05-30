@@ -37,3 +37,11 @@ class WorkspaceRepository(BaseRepository[Workspace]):
             self.session.commit()
             return True
         return False
+
+    def count_links_for_artifact(self, artifact_id: int) -> int:
+        statement = (
+            select(func.count())
+            .select_from(WorkspaceArtifactLink)
+            .where(WorkspaceArtifactLink.artifact_id == artifact_id)
+        )
+        return self.session.exec(statement).one()

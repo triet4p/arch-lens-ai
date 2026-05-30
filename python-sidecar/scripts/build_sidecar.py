@@ -46,6 +46,7 @@ def build():
         # Gom toàn bộ module AI và xử lý tài liệu
         "--collect-all", "pydantic_ai",
         "--collect-all", "markitdown",
+        "--collect-all", "magika",
         "--collect-all", "pymupdf4llm",
         "--collect-all", "pymupdf",
         
@@ -58,6 +59,7 @@ def build():
         "--copy-metadata", "numpy",
         "--copy-metadata", "pydantic_ai",
         "--copy-metadata", "markitdown",
+        "--copy-metadata", "magika",
         "--copy-metadata", "genai_prices",
         "--copy-metadata", "logfire",
     ]

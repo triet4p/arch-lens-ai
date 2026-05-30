@@ -1,12 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { apiClient } from '../lib/axios';
-import type { ArtifactRead, ArtifactType } from '../types/api';
+import type { AnalysisRead, ArtifactRead, ArtifactType } from '../types/api';
+
 
 export const useArtifacts = (workspaceId: number | null) => {
     const queryClient = useQueryClient();
     const queryKey = ['workspace', workspaceId];
+    const reviewKey = ['workspace', workspaceId, 'review'];
 
-    // --- ADD MUTATIONS ---
+    const invalidateDerivedViews = () => {
+        queryClient.invalidateQueries({ queryKey });
+        queryClient.invalidateQueries({ queryKey: reviewKey });
+        queryClient.invalidateQueries({ queryKey: ['tech-radar'] });
+    };
+
     const addArxiv = useMutation({
         mutationFn: async (paperIdOrUrl: string) => {
             const { data } = await apiClient.post<ArtifactRead>(`/artifacts/arxiv/${workspaceId}`, null, {
@@ -14,7 +22,7 @@ export const useArtifacts = (workspaceId: number | null) => {
             });
             return data;
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey })
+        onSuccess: invalidateDerivedViews,
     });
 
     const addGithub = useMutation({
@@ -24,7 +32,7 @@ export const useArtifacts = (workspaceId: number | null) => {
             });
             return data;
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey })
+        onSuccess: invalidateDerivedViews,
     });
 
     const uploadFile = useMutation({
@@ -34,13 +42,19 @@ export const useArtifacts = (workspaceId: number | null) => {
             const { data } = await apiClient.post<ArtifactRead>(`/artifacts/upload/${workspaceId}`, formData);
             return data;
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey })
+        onSuccess: invalidateDerivedViews,
     });
 
-    // --- DELETE MUTATIONS ---
+    const analyzeArtifact = useMutation({
+        mutationFn: async (artifactId: number) => {
+            const { data } = await apiClient.post<AnalysisRead>(`/artifacts/${artifactId}/analyze`);
+            return data;
+        },
+        onSuccess: invalidateDerivedViews,
+    });
+
     const deleteArtifact = useMutation({
         mutationFn: async ({ id, type }: { id: number, type: ArtifactType }) => {
-            // Mapping endpoint theo type của backend
             const endpointMap: Record<ArtifactType, string> = {
                 paper: 'arxiv',
                 repo: 'github',
@@ -48,8 +62,8 @@ export const useArtifacts = (workspaceId: number | null) => {
             };
             await apiClient.delete(`/artifacts/${endpointMap[type]}/${workspaceId}/${id}`);
         },
-        onSuccess: () => queryClient.invalidateQueries({ queryKey })
+        onSuccess: invalidateDerivedViews,
     });
 
-    return { addArxiv, addGithub, uploadFile, deleteArtifact };
+    return { addArxiv, addGithub, uploadFile, analyzeArtifact, deleteArtifact };
 };

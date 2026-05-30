@@ -10,20 +10,22 @@ This file is the source of truth for the project plan. Detailed task breakdowns 
 
 * [x] **Milestone 1: Desktop foundation and workspace ingestion**
   Tauri shell, Python sidecar, React workspace UI, SQLite persistence, and artifact ingestion for local files, GitHub, and ArXiv.
-* [ ] **Milestone 2: Single-artifact analysis pipeline**
+* [x] **Milestone 2: Single-artifact analysis pipeline**
   Persisted analysis models, backend analysis endpoints, parsing pipeline, and UI rendering for artifact-level due diligence.
-* [ ] **Milestone 3: Cross-verification and strategic outputs**
+* [x] **Milestone 3: Cross-verification and strategic outputs**
   Workspace-level reasoning across artifacts, Tech Radar, and export/reporting flows.
 * [ ] **Milestone 4: Hardening and release readiness**
   Automated tests, error handling, provider/settings UX, and packaging stability.
 
 ## Active Sprints
 
-* [Sprint 2](docs/sprint-plans/sprint-2.md) - *Status: Ready / Next*
+No active sprint is currently defined. The next planning step is Sprint 4.
 
 ## Completed Sprints
 
 * [Sprint 1](docs/sprint-plans/sprint-1.md) - *Status: Done*
+* [Sprint 2](docs/sprint-plans/sprint-2.md) - *Status: Done*
+* [Sprint 3](docs/sprint-plans/sprint-3.md) - *Status: Done*
 
 ## Backlog / Future Work
 

@@ -6,6 +6,7 @@ import { Layout } from './components/layout/Layout';
 import { invoke } from '@tauri-apps/api/core';
 import { WorkspaceList } from './views/WorkspaceList';
 import { WorkspaceDetail } from './views/WorkspaceDetail';
+import { TechRadarView } from './views/TechRadarView';
 
 function App() {
   const { isDarkMode, isBackendReady, setBackendReady, minDisplayTimeReached, 
@@ -53,11 +54,7 @@ function App() {
           ) : (
             <>
               {currentView === 'workspaces' && <WorkspaceList />}
-              {currentView === 'tech_radar' && (
-                <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-                  <h2 className="text-2xl font-black opacity-20 uppercase tracking-widest">Tech Radar Coming Soon</h2>
-                </div>
-              )}
+              {currentView === 'tech_radar' && <TechRadarView />}
             </>
           )}
         </Layout>

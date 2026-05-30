@@ -3,7 +3,7 @@ import { useAppStore } from '../../stores/useAppStore';
 import { FolderKanban, Activity, Sun, Moon, Languages, ScanSearch } from 'lucide-react';
 
 export const Layout: React.FC<{children: React.ReactNode}> = ({ children }) => {
-    const { currentView, setView, isDarkMode, toggleTheme, language, setLanguage, t } = useAppStore();
+    const { currentView, setView, isDarkMode, toggleTheme, language, setLanguage, setSelectedWorkspaceId, t } = useAppStore();
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
@@ -15,10 +15,10 @@ export const Layout: React.FC<{children: React.ReactNode}> = ({ children }) => {
                 </div>
                 
                 <div className="flex-1 py-6 px-4 space-y-2">
-                    <button onClick={() => setView('workspaces')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${currentView === 'workspaces' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50'}`}>
+                    <button onClick={() => { setSelectedWorkspaceId(null); setView('workspaces'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${currentView === 'workspaces' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50'}`}>
                         <FolderKanban size={18} /> {t.workspaces}
                     </button>
-                    <button onClick={() => setView('tech_radar')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${currentView === 'tech_radar' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50'}`}>
+                    <button onClick={() => { setSelectedWorkspaceId(null); setView('tech_radar'); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all ${currentView === 'tech_radar' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800/50'}`}>
                         <Activity size={18} /> {t.techRadar}
                     </button>
                 </div>

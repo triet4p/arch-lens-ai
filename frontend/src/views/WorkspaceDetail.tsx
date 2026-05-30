@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../stores/useAppStore';
 import { useArtifacts } from '../hooks/useArtifacts';
+import { useWorkspaceReview } from '../hooks/useWorkspaceReview';
 import { ArtifactCard } from '../components/workspace/ArtifactCard';
 import { AddArtifactModal } from '../components/workspace/AddArtifactModal';
+import { WorkspaceReviewPanel } from '../components/workspace/WorkspaceReviewPanel';
 import { ChevronLeft, Plus, Cpu, HardDrive, Loader2, LayoutGrid, Info } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/axios';
 import type { WorkspaceDetail as WorkspaceDetailType } from '../types/api';
 
 export const WorkspaceDetail: React.FC = () => {
-    const { selectedWorkspaceId, setSelectedWorkspaceId, t } = useAppStore();
+    const { selectedWorkspaceId, setSelectedWorkspaceId } = useAppStore();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const { data: ws, isLoading } = useQuery({
@@ -18,7 +20,8 @@ export const WorkspaceDetail: React.FC = () => {
         enabled: !!selectedWorkspaceId
     });
 
-    const { deleteArtifact } = useArtifacts(selectedWorkspaceId!);
+    const { deleteArtifact, analyzeArtifact } = useArtifacts(selectedWorkspaceId!);
+    const { reviewQuery, runReview, exportReport } = useWorkspaceReview(selectedWorkspaceId!, ws?.name);
 
     if (isLoading || !ws) {
         return (
@@ -33,6 +36,10 @@ export const WorkspaceDetail: React.FC = () => {
         if (confirm("Remove this artifact from workspace? This will delete local files and analysis data.")) {
             deleteArtifact.mutate({ id, type });
         }
+    };
+
+    const handleAnalyzeArtifact = (id: number) => {
+        analyzeArtifact.mutate(id);
     };
 
     return (
@@ -78,6 +85,15 @@ export const WorkspaceDetail: React.FC = () => {
                 </div>
             </div>
 
+            <WorkspaceReviewPanel
+                review={reviewQuery.data}
+                isLoading={reviewQuery.isLoading}
+                isRefreshing={runReview.isPending || reviewQuery.isRefetching}
+                isExporting={exportReport.isPending}
+                onRefresh={() => runReview.mutate()}
+                onExport={() => exportReport.mutate()}
+            />
+
             {/* Artifacts Section */}
             <div className="space-y-6">
                 <div className="flex items-center justify-between px-2">
@@ -96,8 +112,9 @@ export const WorkspaceDetail: React.FC = () => {
                             <ArtifactCard
                                 key={art.id}
                                 artifact={art}
-                                onAnalyze={(id) => console.log("Trigger Analysis for", id)}
+                                onAnalyze={handleAnalyzeArtifact}
                                 onDelete={handleDeleteArtifact}
+                                isAnalyzing={analyzeArtifact.isPending && analyzeArtifact.variables === art.id}
                             />
                         ))}
                     </div>

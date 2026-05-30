@@ -1,16 +1,28 @@
 import json
+import os
 from typing import List, Optional
 from datetime import datetime
 from src.app.models.workspace import Workspace
 from src.app.repositories.workspace import WorkspaceRepository
 from src.app.repositories.artifact import ArtifactRepository
+from src.app.repositories.analysis import AnalysisRepository
 from src.app.dto.workspace import WorkspaceCreate, WorkspaceRead, WorkspaceUpdate, WorkspaceDetail
 from src.app.dto.artifact import ArtifactRead
+from src.app.core.logger import get_logger
+from src.app.services.analysis import build_analysis_summary_dto
+
+_logger = get_logger("[Service - Workspace]")
 
 class WorkspaceService:
-    def __init__(self, workspace_repo: WorkspaceRepository, artifact_repo: ArtifactRepository):
+    def __init__(
+        self,
+        workspace_repo: WorkspaceRepository,
+        artifact_repo: ArtifactRepository,
+        analysis_repo: AnalysisRepository,
+    ):
         self.workspace_repo = workspace_repo
         self.artifact_repo = artifact_repo
+        self.analysis_repo = analysis_repo
 
     async def list_workspaces(self) -> List[WorkspaceRead]:
         db_workspaces = self.workspace_repo.get_all()
@@ -31,6 +43,7 @@ class WorkspaceService:
 
         # Lấy danh sách artifacts qua JOIN thủ công từ Repository
         db_artifacts = self.workspace_repo.get_artifacts(workspace_id)
+        analysis_by_artifact = self.analysis_repo.list_by_artifact_ids([artifact.id for artifact in db_artifacts if artifact.id is not None])
 
         detail_dto = WorkspaceDetail.model_validate(ws)
         detail_dto.constraints = ws.constraints_dict
@@ -42,6 +55,8 @@ class WorkspaceService:
         for a in db_artifacts:
             data = a.model_dump()
             data["metadata"] = a.metadata_dict
+            if a.id in analysis_by_artifact:
+                data["analysis"] = build_analysis_summary_dto(analysis_by_artifact[a.id])
             a_dto = ArtifactRead.model_validate(data)
             detail_dto.artifacts.append(a_dto)
             
@@ -73,4 +88,28 @@ class WorkspaceService:
         return WorkspaceRead.model_validate(updated_ws)
 
     async def delete_workspace(self, workspace_id: int) -> bool:
+        workspace = self.workspace_repo.get(workspace_id)
+        if not workspace:
+            return False
+
+        linked_artifacts = self.workspace_repo.get_artifacts(workspace_id)
+        for artifact in linked_artifacts:
+            if artifact.id is None:
+                continue
+
+            link_count = self.workspace_repo.count_links_for_artifact(artifact.id)
+            self.workspace_repo.remove_artifact(workspace_id, artifact.id)
+
+            if link_count > 1:
+                continue
+
+            self.analysis_repo.delete(artifact.id)
+            if artifact.local_path and os.path.exists(artifact.local_path):
+                try:
+                    os.remove(artifact.local_path)
+                except OSError as exc:
+                    _logger.warning(f"Failed to delete artifact file {artifact.local_path}: {exc}")
+
+            self.artifact_repo.delete(artifact.id)
+
         return self.workspace_repo.delete(workspace_id)

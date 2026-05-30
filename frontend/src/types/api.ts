@@ -1,8 +1,89 @@
-// XÓA cái enum LMTask cũ đi và thay bằng dòng này:
 export type LMTask = "default" | "summary" | "chat" | "trend" | "code";
 
 export type ArtifactType = "paper" | "repo" | "internal_doc";
 export type ArtifactStatus = "pending" | "processing" | "completed" | "failed";
+
+export interface AnalysisSummaryRead {
+    artifact_id: number;
+    analysis_kind: string;
+    summary_markdown?: string;
+    extracted_data: Record<string, any>;
+    scores: Record<string, any>;
+    analyzed_at: string;
+}
+
+export interface AnalysisRead extends AnalysisSummaryRead {
+    toc: Array<Record<string, any>>;
+    content_map: Record<string, string>;
+}
+
+export interface ReviewArtifactContext {
+    artifact_id: number;
+    artifact_type: ArtifactType;
+    status: ArtifactStatus;
+    title: string;
+    analysis_kind?: string | null;
+    summary_markdown?: string | null;
+    extracted_data: Record<string, any>;
+    scores: Record<string, any>;
+}
+
+export interface WorkspaceReviewInput {
+    workspace_id: number;
+    workspace_name: string;
+    workspace_description?: string | null;
+    constraints: Record<string, any>;
+    artifacts: ReviewArtifactContext[];
+}
+
+export interface ReviewFinding {
+    category: "fit" | "evidence" | "execution" | "risk";
+    title: string;
+    detail: string;
+    related_artifact_ids: number[];
+}
+
+export interface ReviewConflict {
+    severity: "low" | "medium" | "high";
+    title: string;
+    detail: string;
+    related_artifact_ids: number[];
+}
+
+export interface ReviewRecommendation {
+    label: "adopt" | "trial" | "assess" | "hold";
+    rationale: string;
+}
+
+export interface TechRadarEntry {
+    name: string;
+    ring: "adopt" | "trial" | "assess" | "hold";
+    quadrant: "platform" | "delivery" | "data-ai" | "experience" | "architecture";
+    score: number;
+    evidence: string;
+    workspace_ids: number[];
+}
+
+export interface TechRadarRead {
+    generated_at: string;
+    entries: TechRadarEntry[];
+    counts: Record<string, number>;
+    workspaces_covered: number;
+}
+
+export interface WorkspaceReviewRead {
+    workspace_id: number;
+    generated_at: string;
+    review_input: WorkspaceReviewInput;
+    findings: ReviewFinding[];
+    conflicts: ReviewConflict[];
+    decision_summary: string;
+    recommendation: ReviewRecommendation;
+    recommended_next_steps: string[];
+    scores: Record<string, number>;
+    artifact_coverage: Record<string, number>;
+    radar_entries: TechRadarEntry[];
+}
 
 export interface LMSettingResponse {
     active_provider: string;
@@ -21,13 +102,13 @@ export interface LMSettingUpdate {
 
 export interface ArtifactRead {
     id: number;
-    workspace_id: number;
     type: ArtifactType;
     status: ArtifactStatus;
     source_url: string;
     local_path?: string;
     metadata: Record<string, any>;
     created_at: string;
+    analysis?: AnalysisSummaryRead | null;
 }
 
 export interface WorkspaceRead {

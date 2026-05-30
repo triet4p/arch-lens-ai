@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, Dict, Any
 from datetime import datetime
 from src.app.models.artifact import ArtifactType, ArtifactStatus
+from src.app.dto.analysis import AnalysisSummaryRead
 
 class ArtifactBase(BaseModel):
     type: ArtifactType
@@ -16,6 +17,6 @@ class ArtifactRead(ArtifactBase):
     status: ArtifactStatus
     local_path: Optional[str] = None
     created_at: datetime
+    analysis: Optional[AnalysisSummaryRead] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

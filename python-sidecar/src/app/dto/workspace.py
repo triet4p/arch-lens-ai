@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 from src.app.dto.artifact import ArtifactRead
@@ -24,11 +24,7 @@ class WorkspaceRead(WorkspaceBase):
     # Trả về số lượng artifacts để hiển thị ở Dashboard
     artifacts_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
         
 class WorkspaceDetail(WorkspaceRead):
     artifacts: List[ArtifactRead] = []
-
-    class Config:
-        from_attributes = True

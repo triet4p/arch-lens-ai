@@ -20,6 +20,7 @@ export const useWorkspaces = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+            queryClient.invalidateQueries({ queryKey: ['tech-radar'] });
         }
     });
 
@@ -29,6 +30,7 @@ export const useWorkspaces = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+            queryClient.invalidateQueries({ queryKey: ['tech-radar'] });
         }
     });
 

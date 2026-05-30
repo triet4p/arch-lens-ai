@@ -1,11 +1,39 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
+
+from src.app.api.deps import AnalysisServiceDep, ArtifactServiceDep
+from src.app.dto.analysis import AnalysisRead
 from src.app.dto.artifact import ArtifactRead
-from src.app.api.deps import ArtifactServiceDep
 from src.app.core.logger import get_logger
 
 _logger = get_logger("[API - Artifact]")
 
 router = APIRouter()
+
+
+@router.post("/{artifact_id}/analyze", response_model=AnalysisRead)
+async def analyze_artifact(
+    artifact_id: int,
+    service: AnalysisServiceDep,
+):
+    """Phân tích một artifact đã được ingest và lưu kết quả vào database."""
+    try:
+        return await service.analyze_artifact(artifact_id)
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+@router.get("/{artifact_id}/analysis", response_model=AnalysisRead)
+async def get_artifact_analysis(
+    artifact_id: int,
+    service: AnalysisServiceDep,
+):
+    """Lấy kết quả phân tích đã lưu của một artifact."""
+    analysis = await service.get_analysis(artifact_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail=f"Analysis for artifact {artifact_id} not found")
+    return analysis
 
 @router.post("/arxiv/{workspace_id}", response_model=ArtifactRead)
 async def add_arxiv_paper(
